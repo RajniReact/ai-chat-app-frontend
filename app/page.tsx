@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   GoogleOAuthProvider,
@@ -8,9 +8,11 @@ import {
   CredentialResponse,
 } from "@react-oauth/google";
 import api from "@/lib/axios";
+import ScreenLoader from "@/app/components/ScreenLoader";
 
 export default function Home() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem("user")) {
@@ -19,6 +21,7 @@ export default function Home() {
   }, [router]);
 
   const handleLogin = async (response: CredentialResponse) => {
+    setLoading(true);
     try {
       const { data } = await api.post("/auth/google", {
         credential: response.credential,
@@ -29,6 +32,8 @@ export default function Home() {
       router.push("/dashboard");
     } catch (err) {
       console.log("Login failed", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -41,6 +46,7 @@ export default function Home() {
           onError={() => console.log("Login Failed")}
         />
       </div>
+      <ScreenLoader show={loading} />
     </GoogleOAuthProvider>
   );
 }

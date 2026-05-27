@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { socket } from "@/lib/socket";
 import api from "@/lib/axios";
 import { useApp } from "./AppContext";
+import ScreenLoader from "./ScreenLoader";
 
 type Message = {
   id: string;
@@ -76,6 +77,7 @@ export default function ChatRoom() {
 
   return (
     <div className="flex h-full flex-col">
+      <ScreenLoader show={loadingSuggestion} />
       <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
         {messages.length === 0 && (
           <p className="mt-10 text-center text-sm text-zinc-400">

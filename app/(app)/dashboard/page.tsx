@@ -1,47 +1,61 @@
 "use client";
 
+import { useState } from "react";
 import api from "@/lib/axios";
 import { loadRazorpay } from "@/lib/razorpay";
 import { useApp } from "@/app/components/AppContext";
+import ScreenLoader from "@/app/components/ScreenLoader";
 
 export default function DashboardPage() {
   const { user, isPremium } = useApp();
+  const [loading, setLoading] = useState(false);
 
   const handleUpgrade = async () => {
     const ready = await loadRazorpay();
     if (!ready) return;
 
-    const { data: order } = await api.post("/payment/order");
+    setLoading(true);
+    try {
+      const { data: order } = await api.post("/payment/order");
 
-    const checkout = new window.Razorpay({
-      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-      amount: order.amount,
-      currency: order.currency,
-      order_id: order.id,
-      name: "AI Chat Premium",
-      description: "Unlock AI reply suggestions",
-      prefill: { name: user.name },
-      theme: { color: "#2563eb" },
-      handler: async (response: {
-        razorpay_order_id: string;
-        razorpay_payment_id: string;
-        razorpay_signature: string;
-      }) => {
-        await api.post("/payment/verify", {
-          orderId: response.razorpay_order_id,
-          paymentId: response.razorpay_payment_id,
-          signature: response.razorpay_signature,
-          userId: user.id,
-        });
-      },
-    });
+      const checkout = new window.Razorpay({
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        order_id: order.id,
+        name: "AI Chat Premium",
+        description: "Unlock AI reply suggestions",
+        prefill: { name: user.name },
+        theme: { color: "#2563eb" },
+        handler: async (response: {
+          razorpay_order_id: string;
+          razorpay_payment_id: string;
+          razorpay_signature: string;
+        }) => {
+          setLoading(true);
+          try {
+            await api.post("/payment/verify", {
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+              userId: user.id,
+            });
+          } finally {
+            setLoading(false);
+          }
+        },
+      });
 
-    checkout.open();
+      checkout.open();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="mx-auto max-w-2xl p-8">
+    <>
+      <div className="h-full overflow-y-auto">
+        <div className="mx-auto max-w-2xl p-8">
         <h1 className="text-2xl font-semibold text-zinc-900">Dashboard</h1>
         <p className="mt-1 text-sm text-zinc-500">
           Manage your plan and AI features.
@@ -77,6 +91,8 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+      <ScreenLoader show={loading} />
+    </>
   );
 }
