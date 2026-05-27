@@ -86,9 +86,4 @@ lib/
 > Add `http://localhost:3000` to the **Authorized JavaScript origins** of your
 > Google OAuth client, otherwise login is blocked.
 
-## Deployment (Vercel)
 
-- Import the repo into Vercel.
-- Add the three `NEXT_PUBLIC_*` environment variables.
-- After deploying, add the Vercel URL to the Google OAuth client's authorized
-  origins, and point `NEXT_PUBLIC_BACKEND_URL` at the deployed backend.
